@@ -26,18 +26,21 @@ namespace Ensek.Domain.Services
 
         public async Task<UpdateMeterReadingResponse> UpdateMeterReadings(IFormFile file, CancellationToken cancellationToken)
         {
-            var response = new UpdateMeterReadingResponse();
-
             var fileRows = await TextFileReader.ConvertFileToStringList(file);
             var readings = MeterReadingParser.ParseMeterReadings(fileRows);
+            return await UpdateMeterReadings(readings, cancellationToken);
+        }
 
+        public async Task<UpdateMeterReadingResponse> UpdateMeterReadings(List<ParsedMeterReadingResult> readings, CancellationToken cancellationToken)
+        {
+            var response = new UpdateMeterReadingResponse();
             InvalidateDuplicateIds(readings);
             InvalidateBadMeterReadValue(readings);
 
             var accountIds = readings.Where(x => x.Valid).Select(y => y.AccountId).ToList();
-            var latestReadings = await _accountRepository.GetAccountsWithLatestReading(accountIds);
+            var latestReadings = await _accountRepository.GetAccountsWithLatestReading(accountIds, cancellationToken);
             InvalidateMissingAccount(readings, latestReadings.Select(x=>x.AccountId).ToList());
-            IvalidateOldReadings(readings, latestReadings);
+            InvalidateOldReadings(readings, latestReadings);
 
             foreach (var reading in readings.Where(x => x.Valid)) {
                 var newReading = new MeterReading() { 
@@ -96,7 +99,7 @@ namespace Ensek.Domain.Services
             }
         }
 
-        public static void IvalidateOldReadings(List<ParsedMeterReadingResult> readings, List<Account> accounts)
+        public static void InvalidateOldReadings(List<ParsedMeterReadingResult> readings, List<Account> accounts)
         {
             foreach (var row in readings.Where(x=>x.Valid))
             {

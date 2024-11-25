@@ -10,7 +10,7 @@ namespace Ensek.Domain.CsvParser
             for (var i = 1; i < fileRows.Count; i++)
             {
                 string[] values = fileRows[i].Split(',');
-                var result = new ParsedMeterReadingResult(i+1);
+                var result = new ParsedMeterReadingResult();
 
                 if (int.TryParse(values[0], out int accountId))
                 {

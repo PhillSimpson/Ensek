@@ -5,7 +5,7 @@ namespace Ensek.Repository.Repository
 {
     public interface IAccountRepository
     {
-        public Task<List<Account>> GetAccountsWithLatestReading(List<int> accountIds);
+        public Task<List<Account>> GetAccountsWithLatestReading(List<int> accountIds, CancellationToken cancellationToken);
     }
 
     public class AccountRepository : IAccountRepository
@@ -17,12 +17,12 @@ namespace Ensek.Repository.Repository
             _dbContext = dbContext;
         }
 
-        public async Task<List<Account>> GetAccountsWithLatestReading(List<int> accountIds)
+        public async Task<List<Account>> GetAccountsWithLatestReading(List<int> accountIds, CancellationToken cancellationToken)
         {
             return await _dbContext.Accounts
+                .AsNoTracking()
                 .Where(x => accountIds.Contains(x.AccountId))
-                //.Include(m => m.MeterReadings.OrderByDescending(d =>d.MeterReadingDateTime).FirstOrDefault())
-                .Include(x=>x.MeterReadings)
+                .Include(c=> c.MeterReadings.OrderByDescending(d =>d.MeterReadingDateTime).Take(1))
                 .ToListAsync();
         }
     }
