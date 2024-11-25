@@ -1,6 +1,15 @@
 using Ensek.Domain.Services;
+using Ensek.Repository;
+using Ensek.Repository.Repository;
+using Microsoft.EntityFrameworkCore;
+using System;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var connectionString = builder.Configuration.GetConnectionString("Connection");
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(connectionString, 
+    o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
 
 // Add services to the container.
 
@@ -9,6 +18,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddTransient<IMeterReadingService, MeterReadingService>();
+builder.Services.AddTransient<IAccountRepository, AccountRepository>();
+builder.Services.AddTransient<IMeterReadingRepository, MeterReadingRepository>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

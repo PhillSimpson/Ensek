@@ -16,9 +16,9 @@ namespace Ensek.API.Controllers
 
         [HttpPost]
         [Route("/meter-reading-uploads")]
-        public async Task<ActionResult<UpdateMeterReadingResponse>> Post(IFormFile file)
+        public async Task<ActionResult<UpdateMeterReadingResponse>> Post(IFormFile file, CancellationToken cancellationToken)
         {
-            var response = await _meterReadingService.UpdateMeterReadings(file);
+            var response = await _meterReadingService.UpdateMeterReadings(file, cancellationToken);
             if (response != null)
             {
                 return Ok(response);

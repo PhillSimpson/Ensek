@@ -1,22 +1,32 @@
 ﻿using Ensek.Domain.CsvParser;
 using Ensek.Domain.FileReader;
 using Ensek.Domain.Model;
+using Ensek.Repository.Entity;
+using Ensek.Repository.Repository;
 using Microsoft.AspNetCore.Http;
 
 namespace Ensek.Domain.Services
 {
     public interface IMeterReadingService
     {
-        public Task<UpdateMeterReadingResponse> UpdateMeterReadings(IFormFile file);
+        public Task<UpdateMeterReadingResponse> UpdateMeterReadings(IFormFile file, CancellationToken cancellationToken);
     }
 
 
     public class MeterReadingService : IMeterReadingService
     {
-        public async Task<UpdateMeterReadingResponse> UpdateMeterReadings(IFormFile file)
+        public readonly IAccountRepository _accountRepository;
+        public readonly IMeterReadingRepository _meterReadingRepository;
+
+        public MeterReadingService(IAccountRepository accountRepository, IMeterReadingRepository meterReadingRepository)
+        {
+            _accountRepository = accountRepository;
+            _meterReadingRepository = meterReadingRepository;
+        }
+
+        public async Task<UpdateMeterReadingResponse> UpdateMeterReadings(IFormFile file, CancellationToken cancellationToken)
         {
             var response = new UpdateMeterReadingResponse();
-            var meterReadings = new List<ParsedMeterReadingResult>();
 
             var fileRows = await TextFileReader.ConvertFileToStringList(file);
             var readings = MeterReadingParser.ParseMeterReadings(fileRows);
@@ -25,12 +35,22 @@ namespace Ensek.Domain.Services
             InvalidateBadMeterReadValue(readings);
 
             var accountIds = readings.Where(x => x.Valid).Select(y => y.AccountId).ToList();
+            var latestReadings = await _accountRepository.GetAccountsWithLatestReading(accountIds);
+            InvalidateMissingAccount(readings, latestReadings.Select(x=>x.AccountId).ToList());
+            IvalidateOldReadings(readings, latestReadings);
 
-            //has account
-                //get accounts based off current valid import with Date
-                //
-            //date isnt older
-
+            foreach (var reading in readings.Where(x => x.Valid)) {
+                var newReading = new MeterReading() { 
+                    AccountId = reading.AccountId, 
+                    MeterReadingDateTime = reading.MeterReadingDateTime, 
+                    MeterReadValue = reading.MeterReadValue 
+                };
+                if(await _meterReadingRepository.Insert(newReading, cancellationToken))
+                {
+                    response.Updated++;
+                }
+            }
+            response.Failed = readings.Count - response.Updated;
             return response;
         }
 
@@ -65,5 +85,36 @@ namespace Ensek.Domain.Services
             }
         }
 
+        public static void InvalidateMissingAccount(List<ParsedMeterReadingResult> readings, List<int> accountIds)
+        {
+            foreach (var row in readings)
+            {
+                if (!accountIds.Contains(row.AccountId))
+                {
+                    row.Valid = false;
+                }
+            }
+        }
+
+        public static void IvalidateOldReadings(List<ParsedMeterReadingResult> readings, List<Account> accounts)
+        {
+            foreach (var row in readings.Where(x=>x.Valid))
+            {
+                foreach(var account in accounts)
+                {
+                    if (row.AccountId == account.AccountId)
+                    {
+                        if (account.MeterReadings.Any())
+                        {
+                            if (row.MeterReadingDateTime <= account.MeterReadings[0].MeterReadingDateTime)
+                            {
+                                row.Valid = false;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
     }
 }
