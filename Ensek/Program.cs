@@ -2,7 +2,6 @@ using Ensek.Domain.Services;
 using Ensek.Repository;
 using Ensek.Repository.Repository;
 using Microsoft.EntityFrameworkCore;
-using System;
 
 var builder = WebApplication.CreateBuilder(args);
 

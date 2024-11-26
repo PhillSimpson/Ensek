@@ -8,9 +8,9 @@ namespace Ensek.Domain.Test.ServicesTests
 {
     public class MeterReadingServiceTests
     {
-        public MeterReadingService _meterReadingService;
-        public Mock<IAccountRepository> _accountRepository;
-        public Mock<IMeterReadingRepository> _meterReadingRepository;
+        public required MeterReadingService _meterReadingService;
+        public required Mock<IAccountRepository> _accountRepository;
+        public required Mock<IMeterReadingRepository> _meterReadingRepository;
 
         [SetUp]
         public void Setup()
@@ -70,8 +70,4 @@ namespace Ensek.Domain.Test.ServicesTests
             Assert.That(result.Result.Failed == 1);
         }
     }
-
-
-    //ParseMeterReadings
-
 }

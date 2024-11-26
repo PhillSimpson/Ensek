@@ -77,11 +77,7 @@ namespace Ensek.Domain.Services
         {
             foreach (var row in readings)
             {
-                if (row.MeterReadValue >= 0 && row.MeterReadValue < 100000)
-                {
-                    //valid meter reading are positive and upto 5 digits long
-                }
-                else
+                if (!(row.MeterReadValue >= 0 && row.MeterReadValue < 100000))
                 {
                     row.Valid = false;
                 }

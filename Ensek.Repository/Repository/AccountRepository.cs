@@ -23,7 +23,7 @@ namespace Ensek.Repository.Repository
                 .AsNoTracking()
                 .Where(x => accountIds.Contains(x.AccountId))
                 .Include(c=> c.MeterReadings.OrderByDescending(d =>d.MeterReadingDateTime).Take(1))
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
         }
     }
 }
