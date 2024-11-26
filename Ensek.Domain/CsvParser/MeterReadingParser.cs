@@ -11,34 +11,36 @@ namespace Ensek.Domain.CsvParser
             {
                 string[] values = fileRows[i].Split(',');
                 var result = new ParsedMeterReadingResult();
+                if (values.Count() >= 3)
+                {
+                    if (int.TryParse(values[0], out int accountId))
+                    {
+                        result.AccountId = accountId;
+                    }
+                    else
+                    {
+                        result.Valid = false;
+                    }
 
-                if (int.TryParse(values[0], out int accountId))
-                {
-                    result.AccountId = accountId;
-                }
-                else
-                {
-                    result.Valid = false;
-                }
+                    if (DateTime.TryParse(values[1], out DateTime date))
+                    {
+                        result.MeterReadingDateTime = date;
+                    }
+                    else
+                    {
+                        result.Valid = false;
+                    }
 
-                if (DateTime.TryParse(values[1], out DateTime date))
-                {
-                    result.MeterReadingDateTime = date;
+                    if (int.TryParse(values[2], out int value))
+                    {
+                        result.MeterReadValue = value;
+                    }
+                    else
+                    {
+                        result.Valid = false;
+                    }
+                    data.Add(result);
                 }
-                else
-                {
-                    result.Valid = false;
-                }
-
-                if (int.TryParse(values[2], out int value))
-                {
-                    result.MeterReadValue = value;
-                }
-                else
-                {
-                    result.Valid = false;
-                }
-                data.Add(result);
             }
             return data;
         }
